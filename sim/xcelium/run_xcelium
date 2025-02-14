@@ -1,0 +1,4 @@
+#!/bin/bash
+# Run script for Xcelium simulation
+xrun -f compile.f -top testbench $*
+
