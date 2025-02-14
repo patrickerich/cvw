@@ -13,9 +13,11 @@
 
 echo "Executing Wally setup.sh"
 
+WALLY_RISCV=/opt/wally
+
 # Path to RISC-V Tools
-if [ -d /opt/riscv ]; then
-    export RISCV=/opt/riscv
+if [ -d ${WALLY_RISCV} ]; then
+    export RISCV=${WALLY_RISCV}
 elif [ -d ~/riscv ]; then
     export RISCV=~/riscv
 else
