@@ -23,7 +23,7 @@ def parseArgs():
     parser.add_argument("config", help="Configuration file")
     parser.add_argument("testsuite", nargs="?", help="Test suite or path to .elf file")
     parser.add_argument("--elf", "-e", help="ELF File name; use if name does not end in .elf", default="")
-    parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
+    parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilator", "vcs", "xcelium"], default="questa")
     parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
     parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
     parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
@@ -142,7 +142,8 @@ def runSim(args, flags, prefix):
         runVerilator(args)
     elif args.sim == "vcs":
         runVCS(args, flags, prefix)
-
+    elif args.sim == "xcelium":
+        runXcelium(args, flags, prefix)
 def runQuesta(args, flags, prefix):
     # Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
     prefix = "MTI_VCO_MODE=64 " + prefix
@@ -160,6 +161,18 @@ def runQuesta(args, flags, prefix):
 def runVerilator(args):
     print(f"Running Verilator on {args.config} {args.testsuite}")
     os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}" DEFINE_ARGS="{args.define}"')
+
+def runXcelium(args, flags, prefix):
+    print(f"Running Xcelium on {args.config} {args.testsuite}")
+    if args.args:
+        args.args = f'--args "{args.args}"'
+    if args.params:
+        args.params = f'--params "{args.params}"'
+    if args.define:
+        args.define = f'--define "{args.define}"'
+    cmd = f"cd $WALLY/sim/xcelium; {prefix} ./run_xcelium {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {args.define} {flags}"
+    print(cmd)
+    os.system(cmd)
 
 def runVCS(args, flags, prefix):
     print(f"Running VCS on {args.config} {args.testsuite}")
@@ -184,3 +197,5 @@ def main(args):
 if __name__ == "__main__":
     args = parseArgs()
     main(args)
+
+
