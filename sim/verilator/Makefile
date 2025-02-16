@@ -16,9 +16,16 @@ PARAM_ARGS=
 DEFINE_ARGS=
 EXPANDED_PARAM_ARGS:=$(patsubst %,-G%,$(PARAM_ARGS))
 
+
 WALLYCONF?=rv64gc
 TEST?=arch64i
 TESTBENCH?=testbench
+
+TRACE_FLAG?=
+NPROC := $(shell nproc 2>/dev/null || echo 4)
+# THREADS := $(shell expr $(NPROC) - 2)
+THREADS := 8
+
 
 # constants
 # assume WALLY variable is correctly configured in the shell environment
@@ -58,7 +65,7 @@ $(WORKDIR)/V${TESTBENCH}: $(DEPENDENCIES)
 	mkdir -p $(WORKDIR)
 	verilator \
 	--Mdir $(WORKDIR) -o V${TESTBENCH} \
-	--binary --trace \
+	--binary $(TRACE_FLAG) --threads $(THREADS) \
 	$(OPT) $(PARAMS) $(NONPROF) \
 	--top-module ${TESTBENCH}  --relative-includes \
 	$(INCLUDE_PATH) \
@@ -82,3 +89,5 @@ obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF): $(DEPENDENCIES)
 
 clean:
 	rm -rf $(VERILATOR_DIR)/wkdir $(VERILATOR_DIR)/obj_dir_profiling $(VERILATOR_DIR)/logs $(VERILATOR_DIR)/logs_profiling
+
+

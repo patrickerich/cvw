@@ -160,7 +160,8 @@ def runQuesta(args, flags, prefix):
 
 def runVerilator(args):
     print(f"Running Verilator on {args.config} {args.testsuite}")
-    os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}" DEFINE_ARGS="{args.define}"')
+    trace_flag = "--trace" if args.vcd else ""
+    os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}" DEFINE_ARGS="{args.define}" TRACE_FLAG="{trace_flag}"')
 
 def runXcelium(args, flags, prefix):
     print(f"Running Xcelium on {args.config} {args.testsuite}")
