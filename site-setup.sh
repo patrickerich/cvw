@@ -9,17 +9,19 @@
 
 # license servers and commercial CAD tool paths
 # Must edit these based on your local environment.
-export MGLS_LICENSE_FILE=27002@zircon.eng.hmc.edu                   # Change this to your Siemens license server for Questa
-export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
-export IMPERASD_LICENSE_FILE=27020@zircon.eng.hmc.edu               # Change this to your Imperas license server
-export QUESTA_HOME=/cad/mentor/questa_sim-2023.4/questasim          # Change this for your path to Questa, excluding bin
-export DC_HOME=/cad/synopsys/SYN                                    # Change this for your path to Synopsys DC, excluding bin
-export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change this for your path to Synopsys VCS, excluding bin
-export BREKER_HOME=/cad/breker/trek5-2.1.11-GCC6_el7                # Change this for your path to Breker Trek
+#export MGLS_LICENSE_FILE=27002@zircon.eng.hmc.edu                   # Change this to your Siemens license server for Questa
+#export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
+#export IMPERASD_LICENSE_FILE=27020@zircon.eng.hmc.edu               # Change this to your Imperas license server
+#export QUESTA_HOME=/cad/mentor/questa_sim-2023.4/questasim          # Change this for your path to Questa, excluding bin
+export QUESTA_HOME=/opt/intelFPGA_pro/24.2/questa_fse
+#export DC_HOME=/cad/synopsys/SYN                                    # Change this for your path to Synopsys DC, excluding bin
+#export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change this for your path to Synopsys VCS, excluding bin
+#export BREKER_HOME=/cad/breker/trek5-2.1.11-GCC6_el7                # Change this for your path to Breker Trek
 
 # Tools
 # Questa and Synopsys
-export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
+#export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
+export PATH=$QUESTA_HOME/bin:$PATH
 
 # Environmental variables for SoC
 export SYN_pdk=/proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
@@ -39,12 +41,12 @@ export RISCVCTG=/home/harris/repos/riscv-ctg
 if [ -z "$LD_LIBRARY_PATH" ]; then
     export LD_LIBRARY_PATH=$RISCV/riscv64-unknown-elf/lib
 else
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib
+    export LD_LIBRARY_PATH=$RISCV/riscv64-unknown-elf/lib:$LD_LIBRARY_PATH
 fi
 
 # RISC-V Tools
-export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/lib/x86_64-linux-gnu/
-export PATH=$PATH:$RISCV/bin
+export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+export PATH=$RISCV/bin:$PATH
 
 # Activate riscv-python Virtual Environment
 if [ -e "$RISCV"/riscv-python/bin/activate ]; then
