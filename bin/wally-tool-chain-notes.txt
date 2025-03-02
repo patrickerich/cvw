@@ -8,7 +8,7 @@ $WALLY/bin/wally-tool-chain-install.sh --clean $(pwd)/wally-toolchain-$(date +%Y
 or wiythout buiding the buildroot:
 $WALLY/bin/wally-tool-chain-install.sh --clean --no-buildroot $(pwd)/wally-toolchain-nobr-$(date +%Y%m%d)
 2) Make the toolchain portable and package it:
-../cvw_tools/wally_relocate.sh --package ./wally-toolchain
+$WALLY/bin/wally-tool-chain-relocate.sh --package .$(pwd)/wally-toolchain-nobr-$(date +%Y%m%d)
 3) Move to a suitable location and unpack it
 4) Update  setup scripts in Wally repo
 
