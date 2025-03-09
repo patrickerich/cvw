@@ -13,8 +13,7 @@
 
 echo "Executing Wally setup.sh"
 
-#WALLY_RISCV=/opt/wally/wally-toolchain-20250303
-WALLY_RISCV=/opt/wally/wally-toolchain-nobr-20250302
+WALLY_RISCV=/opt/wally/wally-toolchain-20250309
 
 # Path to RISC-V Tools
 if [ -d ${WALLY_RISCV} ]; then

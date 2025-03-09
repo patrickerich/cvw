@@ -24,17 +24,17 @@ export QUESTA_HOME=/opt/intelFPGA_pro/24.2/questa_fse
 export PATH=$QUESTA_HOME/bin:$PATH
 
 # Environmental variables for SoC
-export SYN_pdk=/proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
-#export osupdk=/import/yukari1/pdk/TSMC/28/CMOS/HPC+/stclib/9-track/tcbn28hpcplusbwp30p140-set/tcbn28hpcplusbwp30p140_190a_FE/
-export SYN_TLU=/home/jstine/TLU+
-#export OSUTLU=/import/yukari1/pdk/TSMC/TLU+
-export SYN_MW=/home/jstine/MW
-#export OSUMW=/import/yukari1/pdk/TSMC/MW
-export SYN_memory=/home/jstine/WallyMem/rv64gc/
-#export osumemory=/import/yukari1/pdk/TSMC/WallyMem/rv64gc/
+# export SYN_pdk=/proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
+# #export osupdk=/import/yukari1/pdk/TSMC/28/CMOS/HPC+/stclib/9-track/tcbn28hpcplusbwp30p140-set/tcbn28hpcplusbwp30p140_190a_FE/
+# export SYN_TLU=/home/jstine/TLU+
+# #export OSUTLU=/import/yukari1/pdk/TSMC/TLU+
+# export SYN_MW=/home/jstine/MW
+# #export OSUMW=/import/yukari1/pdk/TSMC/MW
+# export SYN_memory=/home/jstine/WallyMem/rv64gc/
+# #export osumemory=/import/yukari1/pdk/TSMC/WallyMem/rv64gc/
 
-# Environmental variables for CTG (https://github.com/riscv-software-src/riscv-ctg)
-export RISCVCTG=/home/harris/repos/riscv-ctg
+# # Environmental variables for CTG (https://github.com/riscv-software-src/riscv-ctg)
+# export RISCVCTG=/home/harris/repos/riscv-ctg
 
 
 # GCC
@@ -65,17 +65,17 @@ export SPIKE_PATH=$RISCV/bin										# Copy this as it is
 #export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH
 #export LD_LIBRARY_PATH=$RISCV/imperas_riscv_tests/riscv-ovpsim-plus/bin/Linux64:$LD_LIBRARY_PATH
 
-# Imperas DV setup
-export IDV=$RISCV/ImperasDV-OpenHW
-if [ -e "$IDV" ]; then
-    # echo "Imperas exists"
-    export IMPERAS_HOME=$IDV
-    export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
-    export ROOTDIR=~/
-    source "${IMPERAS_HOME}"/bin/setup.sh
-    setupImperas "${IMPERAS_HOME}"
-    export PATH=$IDV/scripts/cvw:$PATH
-fi
+# # Imperas DV setup
+# export IDV=$RISCV/ImperasDV-OpenHW
+# if [ -e "$IDV" ]; then
+#     # echo "Imperas exists"
+#     export IMPERAS_HOME=$IDV
+#     export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
+#     export ROOTDIR=~/
+#     source "${IMPERAS_HOME}"/bin/setup.sh
+#     setupImperas "${IMPERAS_HOME}"
+#     export PATH=$IDV/scripts/cvw:$PATH
+# fi
 
 # Use newer gcc version for older distros
 if [ -e /opt/rh/gcc-toolset-13/enable ]; then
