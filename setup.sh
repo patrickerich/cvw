@@ -1,144 +1,57 @@
 #!/bin/bash
 
-# Default toolchain directory and target directory
-TOOLCHAIN_DIR=${1:-$(pwd)/wally-toolchain}
-TARGET_DIR=${2:-$TOOLCHAIN_DIR}  # By default, look in the toolchain dir
+# setup.sh
+# David_Harris@hmc.edu and kekim@hmc.edu 1 December 2021
+# Set up tools for cvw
 
-# Ensure patchelf is installed
-if ! command -v patchelf &>/dev/null; then
-    echo "❌ Error: patchelf is not installed. Install it first (e.g., apt install patchelf or pacman -S patchelf)."
+# optionally have .bashrc or .bash_profile source this file with
+#if [ -f ~/cvw/setup.sh ]; then
+#	source ~/cvw/setup.sh
+#fi
+
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+echo "Executing Wally setup.sh"
+
+#WALLY_RISCV=/opt/wally/wally-toolchain-20250303
+WALLY_RISCV=/opt/wally/wally-toolchain-nobr-20250302
+
+# Path to RISC-V Tools
+if [ -d ${WALLY_RISCV} ]; then
+    export RISCV=${WALLY_RISCV}
+elif [ -d ~/riscv ]; then
+    export RISCV=~/riscv
+else
+    # set the $RISCV directory here and remove the subsequent two lines
+    # export RISCV=
+    echo "\$RISCV directory not found. Checked /opt/riscv and ~/riscv. Edit setup.sh to point to your custom \$RISCV directory."
+    exit 1
+fi
+echo \$RISCV set to "${RISCV}"
+
+# Path to Wally repository
+WALLY=$(dirname "${BASH_SOURCE[0]:-$0}")
+export WALLY=$(cd "$WALLY" && pwd)
+echo \$WALLY set to "${WALLY}"
+# utility functions in Wally repository
+export PATH=$WALLY/bin:$PATH
+
+# Setup cvw-arch-verif paths
+if [ -e "${WALLY}"/addins/cvw-arch-verif/setup.sh ]; then
+    source "${WALLY}"/addins/cvw-arch-verif/setup.sh
+else
+    echo "setup.sh not found in \$WALLY/addins/cvw-arch-verif directory. Make sure you cloned the submodules."
+fi
+
+# Verilator needs a larger core file size to simulate CORE-V Wally
+ulimit -c 300000
+
+# load site licenses and tool locations
+if [ -e "${RISCV}"/site-setup.sh ]; then
+    source "${RISCV}"/site-setup.sh
+else
+    echo "site-setup.sh not found in \$RISCV directory. Rerun wally-toolchain-install.sh to automatically download it."
     exit 1
 fi
 
-# Function to fix RPATH in ELF binaries
-fix_rpath() {
-    echo "🔄 Fixing RPATH in ELF binaries..."
-    # First fix toolchain binaries
-    find "$TOOLCHAIN_DIR" -type f -exec file {} + | grep 'ELF' | cut -d: -f1 | while read -r bin; do
-        if readelf -d "$bin" | grep -q 'RPATH\|RUNPATH'; then
-            patchelf --set-rpath '$ORIGIN/../lib:$ORIGIN/../lib64' "$bin"
-        fi
-    done
-    
-    # If target dir is different, also fix binaries there
-    if [ "$TARGET_DIR" != "$TOOLCHAIN_DIR" ]; then
-        find "$TARGET_DIR" -type f -exec file {} + | grep 'ELF' | cut -d: -f1 | while read -r bin; do
-            if readelf -d "$bin" | grep -q 'RPATH\|RUNPATH'; then
-                echo "  Fixing RPATH in external binary: $bin"
-                patchelf --set-rpath '$ORIGIN/../lib:$ORIGIN/../lib64' "$bin"
-            fi
-        done
-    fi
-}
-
-# Function to fix shared library dependencies
-fix_sysroot() {
-    echo "🔄 Fixing shared library dependencies..."
-    # First fix toolchain binaries
-    find "$TOOLCHAIN_DIR" -type f -exec file {} + | grep 'ELF' | cut -d: -f1 | while read -r bin; do
-        if ldd "$bin" 2>/dev/null | grep -E '=> /' | grep -q "$TOOLCHAIN_DIR"; then
-            patchelf --set-interpreter "\$ORIGIN/../lib/ld.so" "$bin"
-        fi
-    done
-    
-    # If target dir is different, also fix binaries there
-    if [ "$TARGET_DIR" != "$TOOLCHAIN_DIR" ]; then
-        find "$TARGET_DIR" -type f -exec file {} + | grep 'ELF' | cut -d: -f1 | while read -r bin; do
-            if ldd "$bin" 2>/dev/null | grep -E '=> /' | grep -q "$TOOLCHAIN_DIR"; then
-                echo "  Fixing interpreter in external binary: $bin"
-                patchelf --set-interpreter "\$ORIGIN/../lib/ld.so" "$bin"
-            fi
-        done
-    fi
-}
-
-# Function to fix hardcoded paths in scripts
-fix_scripts() {
-    echo "🔄 Fixing hardcoded paths in scripts..."
-    find "$TARGET_DIR" -type f -print0 |
-    while IFS= read -r -d $'\0' script; do
-        # Skip Python scripts - they'll be handled by fix_python_imports
-        if [[ "$script" == *.py ]]; then
-            continue
-        fi
-        
-        # Skip scripts that call python directly
-        if head -n 1 "$script" | grep -q '^#!.*python'; then
-            continue
-        fi
-        
-        if head -n 1 "$script" | grep -q '^#!\s*/'; then
-            echo "  Processing script: $script"
-
-            # 1. Fix the shebang line (if necessary)
-            interpreter=$(head -n 1 "$script" | sed 's/^#!\s*//')
-            if [[ "$interpreter" == *"$TOOLCHAIN_DIR"* ]]; then
-                relative_interpreter=$(echo "$interpreter" | sed "s|$TOOLCHAIN_DIR|.\/\$(dirname \$(dirname \"\$0\"))|")
-                echo "  Replacing shebang with: #!$relative_interpreter"
-                sed -i "1s|^#!\s*.*|#\!$relative_interpreter|" "$script"
-            fi
-
-            # 2. Replace hardcoded paths in the entire script
-            if grep -q "$TOOLCHAIN_DIR" "$script"; then
-                echo "  Replacing hardcoded paths in script body"
-                sed -i "s|$TOOLCHAIN_DIR|\$(dirname \$(dirname \"\$0\"))|g" "$script"
-            fi
-        fi
-    done
-}
-
-# Function to fix Python imports and paths
-fix_python_imports() {
-    echo "🔄 Fixing Python module imports..."
-    
-    # Create a Python wrapper script that adjusts sys.path at runtime
-    python_wrapper="$TOOLCHAIN_DIR/bin/python-wrapper.sh"
-    cat > "$python_wrapper" << 'EOF'
-#!/bin/bash
-SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
-TOOLCHAIN_ROOT=$(dirname "$SCRIPT_DIR")
-ORIG_PYTHON="$TOOLCHAIN_ROOT/riscv-python/bin/python"
-
-# Adjust Python path to find modules relative to toolchain root
-export PYTHONPATH="$TOOLCHAIN_ROOT/sim/verilator:$PYTHONPATH"
-
-# Execute Python with proper path
-exec "$ORIG_PYTHON" "$@"
-EOF
-    chmod +x "$python_wrapper"
-    
-    # For each Python script that might reference the toolchain
-    find "$TARGET_DIR" -type f -name "*.py" -o -name "*.sh" -o -name "*.bash" | xargs grep -l "$TOOLCHAIN_DIR" 2>/dev/null | while read -r script; do
-        echo "  Fixing Python references in: $script"
-        
-        # If it's a Python script
-        if [[ "$script" == *.py ]]; then
-            # Fix direct path references in Python
-            sed -i "s|$TOOLCHAIN_DIR|os.path.dirname(os.path.dirname(os.path.dirname(__file__)))|g" "$script"
-        else
-            # Replace direct Python calls with the wrapper in shell scripts
-            sed -i "s|$TOOLCHAIN_DIR/riscv-python/bin/python|$(dirname \$(dirname \"\$0\"))/bin/python-wrapper.sh|g" "$script"
-            # Fix any other toolchain references
-            sed -i "s|$TOOLCHAIN_DIR|\$(dirname \$(dirname \"\$0\"))|g" "$script"
-        fi
-    done
-    
-    # Create a .pth file to add our custom paths
-    if [ -d "$TOOLCHAIN_DIR/riscv-python/lib/python3.12/site-packages" ]; then
-        echo "  Creating custom .pth file for Python path management"
-        cat > "$TOOLCHAIN_DIR/riscv-python/lib/python3.12/site-packages/toolchain_paths.pth" << 'EOF'
-import os, sys
-toolchain_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-sim_dir = os.path.join(toolchain_root, 'sim', 'verilator')
-if os.path.exists(sim_dir):
-    sys.path.insert(0, sim_dir)
-EOF
-    fi
-}
-
-# Run the fixes
-fix_rpath
-fix_sysroot
-fix_scripts
-fix_python_imports
-echo "✅ Relocatability fixes applied!"
+echo "setup done"

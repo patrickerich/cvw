@@ -13,9 +13,12 @@
 *.elf*
 *.list
 *.memfile
+*.shm
+*.history
 
 # General directories to ignore
 .vscode/
+.simvision/
 __pycache__/
 **/work*
 !.github/*

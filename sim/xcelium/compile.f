@@ -5,9 +5,13 @@
 +define+XCELIUM
 +incdir+$WALLY/config/shared
 +incdir+$WALLY/config/$WALLYCONF
-+incdir+$WALLY/config/deriv/$WALLYCONF
-# Source files
++incdir+$WALLY/testbench
++incdir+$WALLY/testbench/common
+
+# First compile the package
 $WALLY/src/cvw.sv
+
+# Then compile the rest of the files
 $WALLY/testbench/testbench.sv
 $WALLY/testbench/common/*.sv
 $WALLY/src/*/*.sv

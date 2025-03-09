@@ -1,4 +1,85 @@
 #!/bin/bash
-# Run script for Xcelium simulation
-xrun -f compile.f -top testbench $*
+# Xcelium run script for Wally
+# Usage: run_xcelium CONFIG TEST [additional flags]
 
+if [ "$#" -lt 2 ]; then
+  echo "Usage: $0 CONFIG TEST [additional flags]"
+  exit 1
+fi
+
+CONFIG=$1
+TEST=$2
+shift 2
+
+# Set environment variables
+export WALLYCONF=$CONFIG
+
+# Make sure WALLY environment variable is set
+if [ -z "$WALLY" ]; then
+  echo "Error: WALLY environment variable not set"
+  exit 1
+fi
+
+# Check for Xcelium-specific testbench
+TESTBENCH_FILE="$WALLY/testbench/testbench.sv"
+if [ -f "$WALLY/testbench/testbench-xcelium.sv" ]; then
+  TESTBENCH_FILE="$WALLY/testbench/testbench-xcelium.sv"
+  echo "Using Xcelium-specific testbench"
+fi
+
+# Clean old simulation artifacts
+rm -rf xcelium.d waves.shm
+
+# Check if derivative path exists
+DERIV_PATH=""
+if [ -d "$WALLY/config/deriv/$CONFIG" ]; then
+  DERIV_PATH="-incdir $WALLY/config/deriv/$CONFIG"
+fi
+
+# Handle wave dumping
+ENABLE_WAVES=0
+WAVE_NAME="waves"
+
+# Parse arguments for wave options
+for arg in "$@"; do
+  if [[ "$arg" == "+waves" ]]; then
+    ENABLE_WAVES=1
+  elif [[ "$arg" == "+wave_name="* ]]; then
+    WAVE_NAME=$(echo "$arg" | cut -d'=' -f2)
+  fi
+done
+
+# Export as environment variables
+export ENABLE_WAVES=$ENABLE_WAVES
+export WAVE_NAME=$WAVE_NAME
+
+echo "Compiling design..."
+xrun -setenv CADENCE_ENABLE_AVSREQ_44905_PHASE_1=1 \
+  -sv \
+  -incdir $WALLY/config/shared \
+  -incdir $WALLY/config/$CONFIG \
+  $DERIV_PATH \
+  -incdir $WALLY/testbench \
+  -incdir $WALLY/testbench/common \
+  -timescale 1ns/1ps \
+  -access +rwc \
+  +define+XCELIUM \
+  $WALLY/src/cvw.sv \
+  $TESTBENCH_FILE \
+  $WALLY/testbench/common/*.sv \
+  $WALLY/src/*/*.sv \
+  $WALLY/src/*/*/*.sv \
+  $WALLY/addins/verilog-ethernet/*/*.sv \
+  $WALLY/addins/verilog-ethernet/*/*/*/*.sv \
+  -top testbench \
+  -defparam testbench.TEST=$TEST \
+  -f run.f \
+  -quiet \
+  "$@"
+
+if [ $? -ne 0 ]; then
+  echo "Simulation failed"
+  exit 1
+fi
+
+echo "Simulation completed successfully"

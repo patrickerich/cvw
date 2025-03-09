@@ -35,6 +35,7 @@ def parseArgs():
     parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
     parser.add_argument("--lockstepverbose", "-lv", help="Run ImperasDV lock, step, and compare with tracing enabled", action="store_true")
     parser.add_argument("--rvvi", "-r", help="Simulate rvvi hardware interface and ethernet.", action="store_true")
+    parser.add_argument("--waves", "-w", help="Enable waveform dumping", action="store_true")
     return parser.parse_args()
 
 def validateArgs(args):
@@ -87,6 +88,13 @@ def prepSim(args, ElfFile):
     argsList = []
     flagsList = []
     defineList = []
+    waveName = "waves"
+    if args.elf:
+        waveName = os.path.splitext(os.path.basename(args.elf))[0]
+    elif ElfFile:
+        waveName = os.path.splitext(os.path.basename(ElfFile))[0]
+    elif args.testsuite:
+        waveName = args.testsuite
     if args.vcd:
         paramsList.append("MAKE_VCD=1")
     if args.rvvi:
@@ -113,6 +121,9 @@ def prepSim(args, ElfFile):
         flagsList.append("--breker")
         defineList.append("+define+USE_TREK_DV")
         argsList.append(f"+TREK_TBX_FILE={ElfFileNoExtension}.tbx")
+    if args.waves:
+        argsList.append("+waves")
+        argsList.append(f"+wave_name={waveName}")
     # Combine into a single string
     args.args += " " + " ".join(argsList)
     args.params += " " + " ".join(paramsList)
@@ -165,13 +176,36 @@ def runVerilator(args):
 
 def runXcelium(args, flags, prefix):
     print(f"Running Xcelium on {args.config} {args.testsuite}")
+    # Add environment variables for the config and test
+    cmd = f"cd $WALLY/sim/xcelium; {prefix}"
+    # Build the xrun command with proper arguments
+    plus_args = []
     if args.args:
-        args.args = f'--args "{args.args}"'
+        plus_args.extend(args.args.strip().split())
+    # Process parameter overrides
+    param_args = []
     if args.params:
-        args.params = f'--params "{args.params}"'
+        for param in args.params.strip().split():
+            if "=" in param:
+                name, value = param.split("=", 1)
+                param_args.append(f"-defparam testbench.{name}={value}")
+    # Process defines
+    define_args = []
     if args.define:
-        args.define = f'--define "{args.define}"'
-    cmd = f"cd $WALLY/sim/xcelium; {prefix} ./run_xcelium {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {args.define} {flags}"
+        for define in args.define.strip().split():
+            if define.startswith("+define+"):
+                define_args.append(define)
+            else:
+                define_args.append(f"+define+{define}")
+    # Combine everything into the final command
+    cmd += f" ./run_xcelium {args.config} {args.testsuite}"
+    # Add all the processed arguments
+    if plus_args:
+        cmd += f" {' '.join(plus_args)}"
+    if param_args:
+        cmd += f" {' '.join(param_args)}"
+    if define_args:
+        cmd += f" {' '.join(define_args)}"
     print(cmd)
     os.system(cmd)
 
@@ -198,5 +232,3 @@ def main(args):
 if __name__ == "__main__":
     args = parseArgs()
     main(args)
-
-

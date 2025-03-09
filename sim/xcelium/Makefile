@@ -8,3 +8,11 @@ compile:
 run: compile
 	$(XRUN) -R -f run.f $(PLUS_ARGS)
 
+clean:
+	rm -rf xcelium.d waves.shm *.log *.history *.key *.shm *.diag
+	rm -rf xrun.*
+	rm -rf .simvision
+	rm -rf INCA_libs
+	rm -rf cov_work
+	rm -rf .bpad
+
