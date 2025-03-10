@@ -13,16 +13,19 @@
 
 echo "Executing Wally setup.sh"
 
-WALLY_RISCV=/opt/wally/wally-toolchain-20250309
+WALLY_TOOLCHAIN=/opt/wally/wally-toolchain-20250309
+
+# Check for any active python virtual environment
+if [[ -n "$VIRTUAL_ENV" ]]; then
+    echo "A virtual environment is already active"
+    deactivate
+    echo "Virtual environment deactivated"
+fi
 
 # Path to RISC-V Tools
-if [ -d ${WALLY_RISCV} ]; then
-    export RISCV=${WALLY_RISCV}
-elif [ -d ~/riscv ]; then
-    export RISCV=~/riscv
+if [ -d ${WALLY_TOOLCHAIN} ]; then
+    export RISCV=${WALLY_TOOLCHAIN}
 else
-    # set the $RISCV directory here and remove the subsequent two lines
-    # export RISCV=
     echo "\$RISCV directory not found. Checked /opt/riscv and ~/riscv. Edit setup.sh to point to your custom \$RISCV directory."
     exit 1
 fi
