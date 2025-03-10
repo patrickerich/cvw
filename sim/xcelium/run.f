@@ -3,4 +3,12 @@
 +access+r
 +nowarnTFNPC
 +nowarnTRNNOP
++nowarnPRLDYN
++nowarnLMTMSG
++nowarnSPDUSD
++nowarnBIGWIX
++nowarnBDDEFP
++nowarnMEMODR
+
+
 

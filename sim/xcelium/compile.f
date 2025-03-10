@@ -18,3 +18,4 @@ $WALLY/src/*/*.sv
 $WALLY/src/*/*/*.sv
 $WALLY/addins/verilog-ethernet/*/*.sv
 $WALLY/addins/verilog-ethernet/*/*/*/*.sv
+
